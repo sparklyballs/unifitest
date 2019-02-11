@@ -1,4 +1,5 @@
-FROM lsiobase/ubuntu:xenial
+ARG UBUNTU_VER="xenial"
+FROM sparklyballs/ubuntu-test:${UBUNTU_VER}
 
 # package versions
 ARG UNIFI_BRANCH="unifi-5.6"
