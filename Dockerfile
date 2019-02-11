@@ -43,7 +43,6 @@ RUN \
 	\
 # cleanup
 	\
-	&& apt-get clean \
 	&& rm -rf \
 		/tmp/* \
 		/var/lib/apt/lists/* \
