@@ -2,7 +2,8 @@
 
 # create our folders
 mkdir -p \
-	/config/{data,logs,run}
+	/config/{data,logs,run} \
+	/data/db
 
 
 # create symlinks for config
@@ -20,4 +21,5 @@ done
 # permissions
 chown -R abc:abc \
 	/config \
+	/data/db \
 	/usr/lib/unifi
