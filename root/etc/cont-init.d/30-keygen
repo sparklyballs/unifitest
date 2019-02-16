@@ -1,7 +1,5 @@
 #!/usr/bin/with-contenv bash
 
-cd /config
-
 # generate key
 [[ ! -f /config/data/keystore ]] && \
 	keytool -genkey -keyalg RSA -alias unifi -keystore /config/data/keystore \
