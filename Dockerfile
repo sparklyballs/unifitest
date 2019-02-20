@@ -3,7 +3,7 @@ FROM sparklyballs/ubuntu-test:${UBUNTU_VER}
 
 # package versions
 ARG UBUNTU_VER
-ARG UNIFI_BRANCH="unifi-5.6"
+ARG UNIFI_BRANCH="5.6"
 
 # environment settings
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -12,16 +12,18 @@ ARG DEBIAN_FRONTEND="noninteractive"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN \
+	set -ex \
 	\
 # add mongodb repository
 	\
-	apt-key adv \
+	&& apt-key adv \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
 		--recv 0C49F3730359A14518585931BC711F9BA15703C6 \
 	&& echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu $UBUNTU_VER/mongodb-org/3.4 multiverse" >> \
 		/etc/apt/sources.list.d/mongo.list && \
 	\
 # install runtime packages
+	\
 	apt-get update \
 	&& apt-get install -y \
 	--no-install-recommends \
@@ -33,10 +35,9 @@ RUN \
 	\
 # install unifi
 	\
-	&& UNIFI_VERSION=$(curl -sX GET http://dl-origin.ubnt.com/unifi/debian/dists/${UNIFI_BRANCH}/ubiquiti/binary-amd64/Packages \
-		| grep -A 7 -m 1 'Package: unifi' \
-		| awk -F ': ' '/Version/{print $2;exit}' \
-		| awk -F '-' '{print $1}') \
+	&& UNIFI_VERSION=$(curl -sX GET http://dl-origin.ubnt.com/unifi/debian/dists/unifi-${UNIFI_BRANCH}/ubiquiti/binary-amd64/Packages \
+		| grep -oP "(?<=Version:\ ).*" \
+		| cut -f1 -d"-")  \
 	&& curl -o \
 	/tmp/unifi.deb -L \
 	"http://dl.ubnt.com/unifi/${UNIFI_VERSION}/unifi_sysvinit_all.deb" \
