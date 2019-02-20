@@ -36,8 +36,7 @@ RUN \
 # install unifi
 	\
 	&& UNIFI_VERSION=$(curl -sX GET http://dl-origin.ubnt.com/unifi/debian/dists/unifi-${UNIFI_BRANCH}/ubiquiti/binary-amd64/Packages \
-		| grep -oP "(?<=Version:\ ).*" \
-		| cut -f1 -d"-")  \
+		| grep -Po '(?<=Version:\ )[^-]+') \
 	&& curl -o \
 	/tmp/unifi.deb -L \
 	"http://dl.ubnt.com/unifi/${UNIFI_VERSION}/unifi_sysvinit_all.deb" \
