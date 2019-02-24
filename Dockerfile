@@ -1,9 +1,8 @@
 ARG UBUNTU_VER="xenial"
 FROM sparklyballs/ubuntu-test:${UBUNTU_VER}
 
-# package versions
+# package versions
 ARG UBUNTU_VER
-ARG UNIFI_BRANCH="5.6"
 
 # environment settings
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -11,10 +10,23 @@ ARG DEBIAN_FRONTEND="noninteractive"
 # set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# fetch version file
 RUN \
 	set -ex \
+	&& curl -o \
+	/tmp/version.txt -L \
+	"https://raw.githubusercontent.com/sparklyballs/versioning/master/version.txt"
+
+# fetch source code
+# hadolint ignore=SC1091
+RUN \
+	. /tmp/version.txt \
+	&& set -ex \
+	&& curl -o \
+	/tmp/unifi.deb -L \
+	"http://dl.ubnt.com/unifi/${UNIFI_RELEASE}/unifi_sysvinit_all.deb" \
 	\
-# add mongodb repository
+# add mongodb repository
 	\
 	&& apt-key adv \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
@@ -22,7 +34,7 @@ RUN \
 	&& echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu $UBUNTU_VER/mongodb-org/3.4 multiverse" >> \
 		/etc/apt/sources.list.d/mongo.list && \
 	\
-# install runtime packages
+# install runtime packages
 	\
 	apt-get update \
 	&& apt-get install -y \
@@ -33,23 +45,18 @@ RUN \
 		openjdk-8-jre-headless \
 		wget \
 	\
-# install unifi
+# install unifi
 	\
-	&& UNIFI_VERSION=$(curl -sX GET http://dl-origin.ubnt.com/unifi/debian/dists/unifi-${UNIFI_BRANCH}/ubiquiti/binary-amd64/Packages \
-		| grep -Po '(?<=Version:\ )[^-]+') \
-	&& curl -o \
-	/tmp/unifi.deb -L \
-	"http://dl.ubnt.com/unifi/${UNIFI_VERSION}/unifi_sysvinit_all.deb" \
 	&& dpkg -i /tmp/unifi.deb \
 	\
-# cleanup
+# cleanup
 	\
 	&& rm -rf \
 		/tmp/* \
 		/var/lib/apt/lists/* \
 		/var/tmp/*
 
-# add local files
+# add local files
 COPY root/ /
 
 # Volumes and Ports
