@@ -1,14 +1,11 @@
-ARG ALPINE_VER="3.9"
-FROM alpine:${ALPINE_VER} as fetch_stage
+ARG UBUNTU_VER="xenial"
+FROM sparklyballs/ubuntu-test:${UBUNTU_VER}
 
-############## fetch stage ##############
+# package versions
+ARG UBUNTU_VER
 
-# install fetch packages
-RUN \
-	apk add --no-cache \
-		bash \
-		curl \
-		unzip
+# environment settings
+ARG DEBIAN_FRONTEND="noninteractive"
 
 # set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -25,36 +22,44 @@ RUN \
 RUN \
 	. /tmp/version.txt \
 	&& set -ex \
-	&& mkdir -p \
-		/tmp/unifi \
 	&& curl -o \
-	/tmp/unifi.zip -L \
-	"https://dl.ubnt.com/unifi/5.6.40/UniFi.unix.zip" \
-	&& unzip -qq /tmp/unifi.zip -d /tmp/unifi \
-	&& mv /tmp/unifi/* /usr/lib/unifi
-
-FROM sparklyballs/alpine-test:${ALPINE_VER}
-
-############## runtime stage ##############
-
-# copy artifacts fetch stage
-COPY --from=fetch_stage /usr/lib/unifi /usr/lib/unifi
-
+	/tmp/unifi.deb -L \
+	"http://dl.ubnt.com/unifi/${UNIFI_RELEASE}/unifi_sysvinit_all.deb" \
+	\
+# add mongodb repository
+	\
+	&& apt-key adv \
+		--keyserver hkp://keyserver.ubuntu.com:80 \
+		--recv 0C49F3730359A14518585931BC711F9BA15703C6 \
+	&& echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu $UBUNTU_VER/mongodb-org/3.4 multiverse" >> \
+		/etc/apt/sources.list.d/mongo.list && \
+	\
 # install runtime packages
-RUN \
-	apk add --no-cache \
-		mongodb \
-		openjdk8-jre \
 	\
-# move mongod bin file to fix mongo 4.x unifi bug
+	apt-get update \
+	&& apt-get install -y \
+	--no-install-recommends \
+		binutils \
+		jsvc \
+		mongodb-org-server \
+		openjdk-8-jre-headless \
+		wget \
 	\
-	&& mv /usr/bin/mongod /usr/bin/mongod.bin
+# install unifi
+	\
+	&& dpkg -i /tmp/unifi.deb \
+	\
+# cleanup
+	\
+	&& rm -rf \
+		/tmp/* \
+		/var/lib/apt/lists/* \
+		/var/tmp/*
 
-# add local files
-COPY mongod /usr/bin/mongod
+# add local files
 COPY root/ /
 
-# ports and volumes
+# Volumes and Ports
 WORKDIR /usr/lib/unifi
 VOLUME /config
 EXPOSE 8080 8081 8443 8843 8880
